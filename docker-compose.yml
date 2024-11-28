@@ -1,0 +1,36 @@
+services:
+
+  fullfeedrss:
+    image: 'heussd/fivefilters-full-text-rss:latest'
+    environment:
+      # Leave empty to disable admin section
+      - FTR_ADMIN_PASSWORD=password
+    volumes:
+      # TODO: snake_case `rss-cache`
+      - rss-cache:/var/www/html/cache/rss
+    ports:
+      - '9999:80'
+
+  freshrss:
+    build: 
+      dockerfile: ./docker/freshrss/Dockerfile
+    image: freshrss/freshrss:latest
+    ports:
+      - "80:80"
+    volumes:
+      # - ./freshrss/data:/var/www/FreshRSS/data
+      # - ./freshrss/extensions:/var/www/FreshRSS/extensions
+      - freshrss_data:/var/www/FreshRSS/data
+      # - freshrss_extensions:/var/www/FreshRSS/extensions
+
+
+volumes:
+  freshrss_data:
+    external: true
+  freshrss_extensions:
+    external: true
+  rss-cache:
+    # external: true
+
+# networks:
+#   frontend:
