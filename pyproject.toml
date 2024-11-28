@@ -1,0 +1,13 @@
+[project]
+name = "rss"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+ "html2text>=2024.2.26",
+ "llama-index>=0.12.2",
+ "openai>=1.55.2",
+ "requests>=2.32.3",
+ "tqdm>=4.67.1",
+]
