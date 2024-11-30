@@ -1,36 +1,49 @@
 services:
-
-  fullfeedrss:
-    image: 'heussd/fivefilters-full-text-rss:latest'
-    environment:
-      # Leave empty to disable admin section
-      - FTR_ADMIN_PASSWORD=password
-    volumes:
-      # TODO: snake_case `rss-cache`
-      - rss-cache:/var/www/html/cache/rss
-    ports:
-      - '9999:80'
-
-  freshrss:
-    build: 
-      dockerfile: ./docker/freshrss/Dockerfile
-    image: freshrss/freshrss:latest
+  nginx:
+    image: nginx:alpine
     ports:
       - "80:80"
     volumes:
-      # - ./freshrss/data:/var/www/FreshRSS/data
-      # - ./freshrss/extensions:/var/www/FreshRSS/extensions
-      - freshrss_data:/var/www/FreshRSS/data
-      # - freshrss_extensions:/var/www/FreshRSS/extensions
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - miniflux
+    networks:
+      - internal
 
+  miniflux:
+    image: miniflux/miniflux:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable
+      - RUN_MIGRATIONS=1
+      - CREATE_ADMIN=1
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=test123
+    networks:
+      - internal
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=miniflux
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=miniflux
+    volumes:
+      - miniflux-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s
+    networks:
+      - internal
 
 volumes:
-  freshrss_data:
-    external: true
-  freshrss_extensions:
-    external: true
-  rss-cache:
-    # external: true
+  miniflux-db:
 
-# networks:
-#   frontend:
+networks:
+  internal:
+    # Internal network for services to communicate
