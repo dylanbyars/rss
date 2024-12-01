@@ -70,5 +70,6 @@ docker compose up -d
 └── README.md
 ```
 
-## Future Improvements
+# TODO
 
+- [ ] document what an A record is
