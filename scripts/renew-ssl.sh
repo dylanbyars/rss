@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Stop nginx
+# Stop nginx so the certbot doesn't have competition for port 80
 docker compose stop nginx
 
 # Try to renew
