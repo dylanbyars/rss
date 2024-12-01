@@ -1,28 +1,17 @@
 #!/bin/bash
 
-# Variables
-DOMAIN="byars.xyz"
-CERT_DIR="docker/nginx/certs"
+# Stop nginx
+docker compose stop nginx
 
-# Renew the certificate
+# Try to renew
 certbot renew --quiet
 
-# Check if renewal was successful
+# Copy new certs to nginx directory (only if renewal was successful)
 if [ $? -eq 0 ]; then
-  # Copy new certificates
-  cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem ${CERT_DIR}/nginx.crt
-  cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem ${CERT_DIR}/nginx.key
-
-  # Set proper permissions
-  chmod 644 ${CERT_DIR}/nginx.crt
-  chmod 644 ${CERT_DIR}/nginx.key
-
-  # Restart nginx container
-  docker compose restart nginx
-
-  echo "Certificate renewed successfully!"
-else
-  echo "Certificate renewal failed!"
-  exit 1
+    cp /etc/letsencrypt/live/example.com/fullchain.pem docker/nginx/certs/nginx.crt
+    cp /etc/letsencrypt/live/example.com/privkey.pem docker/nginx/certs/nginx.key
+    chmod 644 docker/nginx/certs/nginx.crt docker/nginx/certs/nginx.key
 fi
 
+# Start nginx (whether renewal worked or not)
+docker compose start nginx 
