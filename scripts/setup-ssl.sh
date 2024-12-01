@@ -1,3 +1,4 @@
+# BUG: this didn't work. I ended up doing it manually. I documented why some in the readme. the port 80 blocking killed me
 #!/bin/bash
 
 # Variables
