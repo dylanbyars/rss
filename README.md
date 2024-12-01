@@ -19,24 +19,56 @@ All inter-service communication happens on an internal Docker network.
 
 ## SSL/HTTPS Setup
 
-The system uses a self-signed SSL certificate for HTTPS encryption. While this provides encryption, browsers will show a security warning because the certificate isn't from a trusted Certificate Authority.
+The system uses Let's Encrypt for SSL certificates. Here's how to set it up:
 
-### Generate SSL Certificate
+1. Configure DNS:
+   - Add A records in your domain registrar pointing to your server IP
+   - One for `example.com` → `YOUR_SERVER_IP`
+   - One for `www.example.com` → `YOUR_SERVER_IP`
 
-I ran this script from inside the prod container. 
+2. Configure firewalls:
+   - In cloud provider's firewall (e.g., Linode, DigitalOcean):
+     ```
+     Allow TCP 80  from 0.0.0.0/0
+     Allow TCP 443 from 0.0.0.0/0
+     ```
+   - Disable UFW if it's running: `sudo ufw disable` because it was interfering with Let's Encrypt domain verification
+   - Why? Docker bypasses UFW anyway, so we manage access through cloud provider's firewall
 
-```bash
-# Create directory for certificates
-mkdir -p docker/nginx/certs
+3. Get SSL certificate:
+   ```bash
+   # Stop nginx to free port 80
+   docker compose stop nginx
+   
+   # Get certificate
+   sudo certbot certonly --standalone \
+     -d example.com -d www.example.com \
+     --email your-email@example.com --agree-tos
+   
+   # Copy certificates
+   sudo cp /etc/letsencrypt/live/example.com/fullchain.pem docker/nginx/certs/nginx.crt
+   sudo cp /etc/letsencrypt/live/example.com/privkey.pem docker/nginx/certs/nginx.key
+   
+   # Set permissions
+   sudo chmod 644 docker/nginx/certs/nginx.crt docker/nginx/certs/nginx.key
+   ```
 
-# Generate self-signed certificate
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout docker/nginx/certs/nginx.key \
-  -out docker/nginx/certs/nginx.crt \
-  -subj "/CN=170.187.149.104
-```
+4. Start nginx with SSL config:
+   ```bash
+   docker compose start nginx
+   ```
 
-TODO: what do I need to do for local development? how can I configure the `nginx.conf` to work in both contexts?
+### Important Notes
+
+- **Port 80 Gotcha**: The most common issue is port 80 being in use. Check:
+  1. Docker containers: `docker compose ps`
+  2. System nginx: `sudo systemctl status nginx`
+  3. Other services: `sudo lsof -i :80`
+  
+- Let's Encrypt certificates expire after 90 days
+- Certbot sets up automatic renewal
+- Certificates are stored in `/etc/letsencrypt/live/example.com/`
+- Nginx expects them in `docker/nginx/certs/` as `nginx.crt` and `nginx.key`
 
 ## Deployment
 
