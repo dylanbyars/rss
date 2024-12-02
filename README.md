@@ -72,7 +72,7 @@ The system uses Let's Encrypt for SSL certificates. Here's how to set it up:
 
 ## Deployment
 
-1. Generate SSL certificates as shown above
+1. Generate SSL certificates as shown above (TODO: the script doesn't actually work but it gets the intent across. Need to fix it)
 2. Start the services:
 
 ```bash
@@ -82,6 +82,10 @@ docker compose up -d
 3. Access Miniflux:
    - Visit https://your-ip-address
    - Accept the browser security warning (due to self-signed certificate)
+
+4. Update DNS:
+   - Point your domain to the server IP
+   - Add `A Records` for `example.com` and `www.example.com` which map the domain to the server IP. 
 
 ## Security Notes
 
@@ -104,4 +108,5 @@ docker compose up -d
 
 # TODO
 
-- [ ] document what an A record is
+- [ ] Fix the SSL certificate generation script
+- [ ] investigate moving miniflux to a subdomain. what changes will I need to make to the nginx config? the DNS records?
